@@ -19,7 +19,11 @@ jobs:
       - name: install (provisions the pinned hugo-extended)
         run: |
           if [ -f pnpm-lock.yaml ]; then
-            corepack enable
+            # pnpm 10 still reads package.json `pnpm.onlyBuiltDependencies` (so
+            # hugo-extended's postinstall runs). pnpm 11 moved that setting and
+            # silently ignores it (ERR_PNPM_IGNORED_BUILDS) — don't `corepack enable`
+            # the latest. Pin to match what Vercel builds with.
+            npm install -g pnpm@10
             pnpm install --prod=false
           else
             npm install
