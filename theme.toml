@@ -1,0 +1,9 @@
+name = "hugo-common"
+license = "MIT"
+licenselink = "https://github.com/bradfeld/hugo-common/blob/main/LICENSE"
+description = "Shared infra partials + build/version/auto-update convention for the Feld Hugo content network."
+homepage = "https://github.com/bradfeld/hugo-common"
+min_version = "0.116.0"
+
+[author]
+  name = "Brad Feld"

@@ -1,0 +1,11 @@
+{{- /*
+  Emit <meta noindex> on any deploy whose baseURL is NOT the production host —
+  i.e. Vercel preview deploys. Set the production host in each site's config:
+    [params]
+      productionHost = "zeroknowledge.ink"
+  If productionHost is unset this partial is a no-op (fails open, never hides prod).
+*/ -}}
+{{- $prod := site.Params.productionHost | default "" -}}
+{{- if and (ne $prod "") (not (strings.Contains site.BaseURL $prod)) -}}
+<meta name="robots" content="noindex, nofollow">
+{{- end -}}

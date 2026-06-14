@@ -1,0 +1,37 @@
+name: smoke
+# Reusable smoke check for Feld Hugo sites. A site calls it from its own workflow:
+#   jobs: { smoke: { uses: bradfeld/hugo-common/.github/workflows/smoke.yml@main } }
+# Renovate Hugo-bump PRs are automerge-gated on this passing, because a clean BUILD
+# is not enough — the byline bug built clean and only rendered wrong.
+on:
+  workflow_call:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: install (provisions the pinned hugo-extended)
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            corepack enable
+            pnpm install --prod=false
+          else
+            npm install
+          fi
+      - name: build with the pinned Hugo
+        run: node_modules/.bin/hugo --gc --minify -b "https://smoke.example/"
+      - name: assert render invariants
+        run: |
+          set -e
+          test -s public/index.html || { echo "::error::public/index.html missing or empty"; exit 1; }
+          # The author-bug class: a critical link rendered with no text.
+          if grep -qE '<a[^>]*></a>' public/index.html; then
+            echo "::error::found an empty <a></a> in index.html (the silent-render regression class)"; exit 1
+          fi
+          echo "smoke OK — built and rendered with the pinned Hugo"

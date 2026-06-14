@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Shared Renovate preset for Feld Hugo-on-Vercel sites. Auto-bumps the pinned Hugo (hugo-extended) and the hugo-common submodule; smoke-gated automerge for minor/patch.",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["npm", "git-submodules"],
+  "git-submodules": { "enabled": true },
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Hugo minor/patch: automerge once the smoke check passes",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["hugo-extended"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "hugo",
+      "automerge": true
+    },
+    {
+      "description": "Hugo major: open the PR but require a human look (breaking-change risk)",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["hugo-extended"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "addLabels": ["hugo-major"]
+    },
+    {
+      "description": "hugo-common submodule: automerge once the smoke check passes",
+      "matchManagers": ["git-submodules"],
+      "groupName": "hugo-common submodule",
+      "automerge": true
+    }
+  ]
+}
