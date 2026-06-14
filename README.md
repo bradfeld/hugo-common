@@ -97,7 +97,8 @@ critical elements, no Hugo errors) — catching the silent-render regression cla
   `@vercel/node` builder expected (`@noble` ENOENT). Sites with functions keep their
   existing manager; pure-static sites can standardize on npm.
 - **Verifying a Vercel deploy via the API:** commit messages can carry unescaped control
-  chars that break `jq` — pipe through `tr -d '\000-\037'` first. Token:
+  chars that break `jq` — pipe through `perl -pe 's/[\x00-\x1f]//g'` first (BSD/macOS
+  `tr -d '\000-\037'` and `tr -d '[:cntrl:]'` do NOT reliably strip them). Token:
   `gcloud secrets versions access latest --secret=platform_vercel_token --project=authormagic-480416`;
   team id lives in `platform_vercel_team_id`.
 
