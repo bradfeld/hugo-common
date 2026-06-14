@@ -121,7 +121,7 @@ _(More infra partials — analytics, shared OG/meta — land here as they're fac
 
 ---
 
-## Rollout status (2026-06-13)
+## Rollout status (updated 2026-06-14)
 
 All four sites migrated to the in-repo Hugo pin (`0.163.0`), the shared Renovate preset,
 and the reusable smoke gate — each deployed and verified live.
@@ -133,16 +133,26 @@ and the reusable smoke gate — each deployed and verified live.
 | adventuresinclaude.ai | 0.163.0 | npm | ✓ | ✓ |
 | feld.com | 0.163.0 | npm | ✓ | ✓ |
 
+**Done 2026-06-14:**
+
+- **Renovate is live.** The Mend/Renovate GitHub App is installed across all `bradfeld`
+  repos (Renovate Only, free Community plan) and set to **Enabled** — not the default
+  Silent — so bump PRs actually open and the smoke-gated automerge is active. The first
+  scheduled job had not run yet at time of writing (no PRs opened), but the engine is on.
+- **`bradfeld/hugo-site-template` exists.** Created as a public GitHub template repo
+  (pinned `hugo-extended@0.163.0`, the Renovate preset, the smoke gate, the `hugo-common`
+  submodule, env-aware `vercel.json`, and a minimal buildable home). Builds clean on
+  0.163.0 and its CI smoke run passes. New sites: *Use this template*.
+
 **Still open:**
 
-- **Renovate GitHub App** isn't installed on the bradfeld repos yet (Brad's one-time
-  click). Until then, auto-bump PRs don't open. Dependabot is the zero-install fallback.
 - **Vercel `HUGO_VERSION` env cleanup** — the old hidden per-project env pins on
-  feld/foundry/aic are now redundant (the in-repo pin is authoritative). Remove them, and
-  fix foundry's misconfigured `sensitive`-prod one. Expand-contract: the in-repo pin is
-  proven first (it is).
+  feld/foundry/aic are now redundant (the in-repo pin is authoritative; confirmed still
+  present via the Vercel API on all three, zk already has none). Remove them, and fix
+  foundry's misconfigured `sensitive`-prod one. Expand-contract: the in-repo pin is proven
+  first (it is).
 - **zk pnpm-11 forward-compat** — move `onlyBuiltDependencies` to `pnpm-workspace.yaml`
   or pin `packageManager` (see Gotchas).
-- **`bradfeld/hugo-site-template`** scaffold repo — not yet created.
 - **Submodule / partial wiring** — the shared `preview-noindex` partial isn't vendored
-  into any site yet (sites still carry inline noindex logic). Thin win, deferred.
+  into the existing bespoke sites yet (they still carry inline noindex logic; the template
+  wires it from day one). Thin win, deferred.
