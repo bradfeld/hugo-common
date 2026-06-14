@@ -34,8 +34,10 @@ jobs:
         run: |
           set -e
           test -s public/index.html || { echo "::error::public/index.html missing or empty"; exit 1; }
-          # The author-bug class: a critical link rendered with no text.
-          if grep -qE '<a[^>]*></a>' public/index.html; then
-            echo "::error::found an empty <a></a> in index.html (the silent-render regression class)"; exit 1
+          # The author-bug class: a critical link rendered with NO text AND NO
+          # aria-label (a genuinely broken link). PaperMod's accessible card-overlay
+          # links carry an aria-label, so the negative lookahead excludes them.
+          if grep -qP '<a(?![^>]*aria-label)[^>]*></a>' public/index.html; then
+            echo "::error::empty <a></a> with no text and no aria-label (broken-link / author-bug class)"; exit 1
           fi
           echo "smoke OK — built and rendered with the pinned Hugo"
