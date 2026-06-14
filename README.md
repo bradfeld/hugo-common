@@ -8,9 +8,13 @@ Vercel, auto-updates, and verifies itself — so the version can't drift or be f
 (the failure that built zeroknowledge.ink on Hugo 0.58.2 and emptied its byline), and
 new sites start consistent.
 
-It is vendored into each site as a **git submodule** at `themes/hugo-common` and listed
-in the site's `theme` config. (Git submodule, not Hugo Module — Go isn't installed; the
-submodule is the proven PaperMod pattern on this Vercel setup.)
+Each site consumes it two ways: (1) its **Renovate preset** and **reusable smoke
+workflow** by GitHub reference — `extends: github>bradfeld/hugo-common` and
+`uses: bradfeld/hugo-common/.github/workflows/smoke.yml@main` (active on all four sites
+today); and (2) for the **shared partials**, as a **git submodule** at `themes/hugo-common`
+listed in the site's `theme` config. (Git submodule, not Hugo Module — Go isn't installed;
+the submodule is the proven PaperMod pattern on this Vercel setup.) The submodule/partial
+wiring is the next rollout step — see status below.
 
 ---
 
@@ -74,6 +78,31 @@ critical elements, no Hugo errors) — catching the silent-render regression cla
 
 ---
 
+## Gotchas (learned the hard way)
+
+- **pnpm 11 silently skips the build script.** `corepack` can pull pnpm 11, which
+  IGNORES `package.json`'s `pnpm.onlyBuiltDependencies` (`ERR_PNPM_IGNORED_BUILDS`) —
+  hugo-extended's postinstall never runs, there's no `node_modules/.bin/hugo`, and the
+  build dies. The reusable smoke workflow pins **pnpm@10** to dodge this. For forward-
+  compat on a real deploy, move `onlyBuiltDependencies` to `pnpm-workspace.yaml` or pin
+  pnpm via `packageManager` in `package.json`.
+- **A green build is not a correct render.** The byline bug that started all this BUILT
+  clean on the wrong Hugo version. That's why the smoke gate asserts render invariants
+  (non-empty critical elements), not just exit 0.
+- **PaperMod's accessible card links are intentionally empty `<a>`** — they carry an
+  `aria-label` instead of text. The smoke gate only fails on anchors missing BOTH text
+  and aria-label (the genuine author-bug class), not these.
+- **Don't switch a site's package manager during migration.** zeroknowledge's serverless
+  `/api` functions broke when pnpm→npm changed the `node_modules` layout Vercel's
+  `@vercel/node` builder expected (`@noble` ENOENT). Sites with functions keep their
+  existing manager; pure-static sites can standardize on npm.
+- **Verifying a Vercel deploy via the API:** commit messages can carry unescaped control
+  chars that break `jq` — pipe through `tr -d '\000-\037'` first. Token:
+  `gcloud secrets versions access latest --secret=platform_vercel_token --project=authormagic-480416`;
+  team id lives in `platform_vercel_team_id`.
+
+---
+
 ## Adding a new site
 
 1. Start from `bradfeld/hugo-site-template` (it ships steps 1–5 above).
@@ -88,3 +117,31 @@ critical elements, no Hugo errors) — catching the silent-render regression cla
 | `preview-noindex.html` | `<meta noindex>` on any non-production baseURL (set `params.productionHost`) |
 
 _(More infra partials — analytics, shared OG/meta — land here as they're factored out of the bespoke sites.)_
+
+---
+
+## Rollout status (2026-06-13)
+
+All four sites migrated to the in-repo Hugo pin (`0.163.0`), the shared Renovate preset,
+and the reusable smoke gate — each deployed and verified live.
+
+| site | pin | pkg mgr | renovate + smoke | live |
+|---|---|---|---|---|
+| zeroknowledge.ink | 0.163.0 | pnpm (has `/api`) | ✓ | ✓ |
+| foundry.vc | 0.163.0 | npm | ✓ | ✓ |
+| adventuresinclaude.ai | 0.163.0 | npm | ✓ | ✓ |
+| feld.com | 0.163.0 | npm | ✓ | ✓ |
+
+**Still open:**
+
+- **Renovate GitHub App** isn't installed on the bradfeld repos yet (Brad's one-time
+  click). Until then, auto-bump PRs don't open. Dependabot is the zero-install fallback.
+- **Vercel `HUGO_VERSION` env cleanup** — the old hidden per-project env pins on
+  feld/foundry/aic are now redundant (the in-repo pin is authoritative). Remove them, and
+  fix foundry's misconfigured `sensitive`-prod one. Expand-contract: the in-repo pin is
+  proven first (it is).
+- **zk pnpm-11 forward-compat** — move `onlyBuiltDependencies` to `pnpm-workspace.yaml`
+  or pin `packageManager` (see Gotchas).
+- **`bradfeld/hugo-site-template`** scaffold repo — not yet created.
+- **Submodule / partial wiring** — the shared `preview-noindex` partial isn't vendored
+  into any site yet (sites still carry inline noindex logic). Thin win, deferred.
