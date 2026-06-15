@@ -2,20 +2,19 @@ name: renovate
 # Self-hosted Renovate runner for the PRIVATE Feld Hugo sites.
 #
 # Why this exists: Mend's hosted Renovate cloud auto-onboarded the PUBLIC template
-# (hugo-site-template) in ~51s and auto-merged its bumps, but the four PRIVATE sites
-# got zero jobs for 24h+ — despite the GitHub App having All-repos access and
-# byte-identical renovate.json configs. Rather than depend on Mend's opaque
-# private-repo handling, we run Renovate ourselves from here.
+# (hugo-site-template) but never ran jobs on the four PRIVATE sites despite All-repos
+# GitHub App access and identical configs. So we run Renovate ourselves from here.
 #
-# Each target repo keeps its own renovate.json (extends bradfeld/hugo-common), so the
-# bump + smoke-gated-automerge policy is unchanged. This workflow only supplies the
-# runner and the token.
+# Auth: a dedicated GitHub App (feld-hugo-renovate, app-id 4060878) installed on the
+# four sites. Each run mints a short-lived installation token via
+# actions/create-github-app-token — no PAT, no expiry, no manual rotation, and PRs are
+# authored by the app (bot identity). The token also triggers each site's smoke.yml
+# (app/installation tokens trigger workflows, unlike the default GITHUB_TOKEN).
+# Only the app's private key is a secret (RENOVATE_APP_PRIVATE_KEY on this repo); the
+# app id is not sensitive and is inlined below.
 #
-# RENOVATE_TOKEN must be a PAT or GitHub App token — NOT the default GITHUB_TOKEN —
-# so Renovate's PRs trigger each site's smoke.yml (events from GITHUB_TOKEN do not
-# trigger other workflows). Store it as an Actions secret on bradfeld/hugo-common.
-# Required scope on the four sites + read on hugo-common (for the shared preset):
-# contents:write, pull-requests:write, issues:write, workflows:write.
+# Each target repo keeps its own renovate.json (extends this repo's preset), which
+# scopes management to Hugo (hugo-extended) + the hugo-common submodule only.
 
 on:
   schedule:
@@ -36,16 +35,24 @@ jobs:
   renovate:
     runs-on: ubuntu-latest
     steps:
+      - name: Mint an installation token from the feld-hugo-renovate GitHub App
+        id: app-token
+        uses: actions/create-github-app-token@v3.2.0
+        with:
+          app-id: "4060878"
+          private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+          owner: bradfeld
+          repositories: feld.com,foundry.vc,adventuresinclaude,zeroknowledge
+
       - name: Run Renovate
         uses: renovatebot/github-action@v46.1.15
         env:
-          RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
+          RENOVATE_TOKEN: ${{ steps.app-token.outputs.token }}
           RENOVATE_PLATFORM: github
           RENOVATE_AUTODISCOVER: "false"
           RENOVATE_REPOSITORIES: bradfeld/feld.com,bradfeld/foundry.vc,bradfeld/adventuresinclaude,bradfeld/zeroknowledge
-          # These repos have no branch protection, so GitHub native auto-merge would
-          # merge instantly with no check to wait on. Disable it — Renovate then waits
-          # for the smoke check to go green and merges via API itself, matching how the
-          # Mend-hosted template behaves.
+          # No branch protection on these repos, so GitHub native auto-merge would merge
+          # instantly with nothing to gate on. Disable it: Renovate waits for the smoke
+          # check to go green and merges via API itself.
           RENOVATE_PLATFORM_AUTOMERGE: "false"
           LOG_LEVEL: ${{ github.event.inputs.logLevel || 'info' }}
