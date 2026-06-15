@@ -1,11 +1,17 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Shared Renovate preset for Feld Hugo-on-Vercel sites. Auto-bumps the pinned Hugo (hugo-extended) and the hugo-common submodule; smoke-gated automerge for minor/patch.",
+  "description": "Shared Renovate preset for Feld Hugo-on-Vercel sites. Scope is deliberately Hugo-only: auto-bumps the pinned Hugo (hugo-extended) and the hugo-common submodule, smoke-gated automerge for minor/patch. ALL other npm deps are ignored on purpose — these are static sites whose build/migration tooling (typescript, tsx, turndown, etc.) does not ship to readers; GitHub's native Dependabot security alerts cover CVEs on any runtime libs (e.g. zeroknowledge @noble/*).",
   "extends": ["config:recommended"],
   "enabledManagers": ["npm", "git-submodules"],
   "git-submodules": { "enabled": true },
   "labels": ["dependencies"],
   "packageRules": [
+    {
+      "description": "Hugo-only scope: ignore every npm dep except hugo-extended (build tooling, migration scripts, runtime libs). Static sites — that tail does not ship; Dependabot security alerts cover CVEs.",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["*", "!hugo-extended"],
+      "enabled": false
+    },
     {
       "description": "Hugo minor/patch: automerge once the smoke check passes",
       "matchManagers": ["npm"],
