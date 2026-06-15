@@ -1,30 +1,31 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Shared Renovate preset for Feld Hugo-on-Vercel sites. Scope is deliberately Hugo-only: auto-bumps the pinned Hugo (hugo-extended) and the hugo-common submodule, smoke-gated automerge for minor/patch. ALL other npm deps are ignored on purpose — these are static sites whose build/migration tooling (typescript, tsx, turndown, etc.) does not ship to readers; GitHub's native Dependabot security alerts cover CVEs on any runtime libs (e.g. zeroknowledge @noble/*).",
+  "description": "Shared Renovate preset for Feld Hugo-on-Vercel sites. Scope is deliberately Hugo-only: the npm manager is disabled wholesale and ONLY hugo-extended is re-enabled, plus the hugo-common git submodule. Smoke-gated automerge for minor/patch. All other npm deps (build/migration tooling like typescript/tsx/turndown, runtime libs like @noble/*) are intentionally ignored — these are static sites whose npm tail does not ship to readers; GitHub's native Dependabot security alerts cover CVEs on any runtime libs.",
   "extends": ["config:recommended"],
   "enabledManagers": ["npm", "git-submodules"],
   "git-submodules": { "enabled": true },
   "labels": ["dependencies"],
   "packageRules": [
     {
-      "description": "Hugo-only scope: ignore every npm dep except hugo-extended (build tooling, migration scripts, runtime libs). Static sites — that tail does not ship; Dependabot security alerts cover CVEs.",
+      "description": "Allowlist scope: disable ALL npm deps by default. Matches by manager only (no name glob), so scoped packages like @types/node are covered too. hugo-extended is re-enabled below.",
       "matchManagers": ["npm"],
-      "matchPackageNames": ["*", "!hugo-extended"],
       "enabled": false
     },
     {
-      "description": "Hugo minor/patch: automerge once the smoke check passes",
+      "description": "Hugo minor/patch: re-enable and automerge once the smoke check passes",
       "matchManagers": ["npm"],
       "matchPackageNames": ["hugo-extended"],
       "matchUpdateTypes": ["minor", "patch"],
+      "enabled": true,
       "groupName": "hugo",
       "automerge": true
     },
     {
-      "description": "Hugo major: open the PR but require a human look (breaking-change risk)",
+      "description": "Hugo major: re-enable but open the PR only (human look — breaking-change risk)",
       "matchManagers": ["npm"],
       "matchPackageNames": ["hugo-extended"],
       "matchUpdateTypes": ["major"],
+      "enabled": true,
       "automerge": false,
       "addLabels": ["hugo-major"]
     },
