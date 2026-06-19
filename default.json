@@ -38,6 +38,14 @@
       "matchManagers": ["git-submodules"],
       "groupName": "hugo-common submodule",
       "automerge": true
+    },
+    {
+      "description": "PaperMod theme submodule: never automerge — theme bumps must be human-reviewed PRs. The rule above matches ALL git-submodules, so it was auto-merging each site's themes/PaperMod (aic PR #25 auto-merged the 154d006 bump, which renamed core header CSS classes and broke the nav — the smoke check verifies the build, not the rendered layout). This later rule overrides automerge for PaperMod only. Re-enable once each site's copied core partials are ~0 and a rendered-layout gate runs on the bump PR. AIC-69.",
+      "matchManagers": ["git-submodules"],
+      "matchDepNames": ["themes/PaperMod"],
+      "groupName": "PaperMod theme",
+      "automerge": false,
+      "addLabels": ["papermod-theme"]
     }
   ]
 }
