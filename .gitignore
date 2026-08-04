@@ -1,0 +1,18 @@
+# Secrets. Nothing has leaked here — this is preventive. A .env is the usual
+# place credentials land locally, and there was no rule stopping a commit.
+# The README documents a `gcloud secrets versions access` call, so anyone
+# following it is one convenience step away from writing one of these.
+.env
+.env.*
+!.env.example
+
+# Hugo build output
+public/
+resources/_gen/
+.hugo_build.lock
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
