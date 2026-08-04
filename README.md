@@ -99,7 +99,7 @@ critical elements, no Hugo errors) — catching the silent-render regression cla
 - **Verifying a Vercel deploy via the API:** commit messages can carry unescaped control
   chars that break `jq` — pipe through `perl -pe 's/[\x00-\x1f]//g'` first (BSD/macOS
   `tr -d '\000-\037'` and `tr -d '[:cntrl:]'` do NOT reliably strip them). Token:
-  `gcloud secrets versions access latest --secret=platform_vercel_token --project=authormagic-480416`;
+  `gcloud secrets versions access latest --secret=platform_vercel_token --project=<your-gcp-project>`;
   team id lives in `platform_vercel_team_id`.
 
 ---
