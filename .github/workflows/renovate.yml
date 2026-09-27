@@ -5,13 +5,14 @@ name: renovate
 # (hugo-site-template) but never ran jobs on the four PRIVATE sites despite All-repos
 # GitHub App access and identical configs. So we run Renovate ourselves from here.
 #
-# Auth: a dedicated GitHub App (feld-hugo-renovate, app-id 4060878) installed on the
+# Auth: a dedicated GitHub App (feld-hugo-renovate, app-id 4060878, client-id
+# Iv23liJwt6rScSolHfTJ) installed on the
 # four sites. Each run mints a short-lived installation token via
 # actions/create-github-app-token — no PAT, no expiry, no manual rotation, and PRs are
 # authored by the app (bot identity). The token also triggers each site's smoke.yml
 # (app/installation tokens trigger workflows, unlike the default GITHUB_TOKEN).
 # Only the app's private key is a secret (RENOVATE_APP_PRIVATE_KEY on this repo); the
-# app id is not sensitive and is inlined below.
+# client id is not sensitive and is inlined below.
 #
 # Each target repo keeps its own renovate.json (extends this repo's preset), which
 # scopes management to Hugo (hugo-extended) + the hugo-common submodule only.
@@ -42,7 +43,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3.2.0
         with:
-          app-id: "4060878"
+          client-id: Iv23liJwt6rScSolHfTJ # app-id is deprecated in create-github-app-token
           private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
           owner: bradfeld
           repositories: feld.com,foundry.vc,adventuresinclaude,zeroknowledge
