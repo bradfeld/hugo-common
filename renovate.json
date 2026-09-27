@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Config for THIS repo only (the sites' shared preset is default.json). Run by Mend's hosted Renovate app, which works on public repos. Keeps the runner (renovatebot/github-action) and smoke.yml's actions current, and — load-bearing — each automerged bump is a commit, which keeps this PUBLIC repo active so GitHub doesn't auto-disable the scheduled renovate.yml after 60 days of no activity.",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["github-actions"],
+  "dependencyDashboard": false,
+  "packageRules": [
+    {
+      "description": "Minor/patch action bumps: automerge. No PR checks exist in this repo, so ignoreTests is required or Renovate waits forever. Majors stay as PRs for a human look.",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
+      "groupName": "github-actions",
+      "automerge": true,
+      "ignoreTests": true
+    }
+  ]
+}

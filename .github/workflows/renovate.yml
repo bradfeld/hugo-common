@@ -18,7 +18,10 @@ name: renovate
 
 on:
   schedule:
-    - cron: "0 */4 * * *" # every 4h; Renovate's own rate limits prevent spam
+    # Daily, 14:17 UTC (morning US time). Hugo ships every few weeks, so more often buys
+    # nothing. Automerge lands on the run AFTER the smoke check goes green, so a bump
+    # PR opens one morning and merges the next — a daytime production deploy, not 3 AM.
+    - cron: "17 14 * * *"
   workflow_dispatch:
     inputs:
       logLevel:
@@ -45,7 +48,7 @@ jobs:
           repositories: feld.com,foundry.vc,adventuresinclaude,zeroknowledge
 
       - name: Run Renovate
-        uses: renovatebot/github-action@v46.1.15
+        uses: renovatebot/github-action@v46.3.4
         env:
           RENOVATE_TOKEN: ${{ steps.app-token.outputs.token }}
           RENOVATE_PLATFORM: github

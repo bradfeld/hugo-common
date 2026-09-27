@@ -62,7 +62,12 @@ ENOENT). pnpm needs `pnpm.onlyBuiltDependencies: ["hugo-extended"]` to run the p
 Renovate opens a PR on each new Hugo release. The site's **smoke workflow** (below)
 verifies the bump RENDERS correctly — a green *build* is not enough (the byline bug
 built clean). Automerge minor/patch on green; majors get a look.
-**Renovate's GitHub App must be installed on the bradfeld repos (one-time).**
+**Who runs it:** a self-hosted Renovate in this repo (`.github/workflows/renovate.yml`,
+daily), authenticated as the `feld-hugo-renovate` GitHub App. Add a new private site to
+that app's installation AND to the workflow's repo lists. Mend's hosted Renovate app
+never reliably ran on the private sites and must NOT have them in its repository access —
+two bots on one repo fight over the same `renovate/*` branch (aic's Hugo 0.165 bump
+stalled 8 days that way). Mend does run this repo itself (`renovate.json`, actions only).
 
 **5. Smoke check** — each site's `.github/workflows/smoke.yml` calls the reusable
 workflow here:
@@ -96,6 +101,11 @@ critical elements, no Hugo errors) — catching the silent-render regression cla
   `/api` functions broke when pnpm→npm changed the `node_modules` layout Vercel's
   `@vercel/node` builder expected (`@noble` ENOENT). Sites with functions keep their
   existing manager; pure-static sites can standardize on npm.
+- **This repo is public, so its scheduled Renovate run dies after 60 quiet days.** GitHub
+  auto-disables `schedule:` workflows in a public repo with no activity for 60 days —
+  silently, and the sites stop getting Hugo bumps. `renovate.json` here automerges action
+  bumps, which are the commits that keep it alive. If Actions shows `renovate` as
+  disabled: `gh workflow enable renovate.yml -R bradfeld/hugo-common`.
 - **Verifying a Vercel deploy via the API:** commit messages can carry unescaped control
   chars that break `jq` — pipe through `perl -pe 's/[\x00-\x1f]//g'` first (BSD/macOS
   `tr -d '\000-\037'` and `tr -d '[:cntrl:]'` do NOT reliably strip them). Token:
