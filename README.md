@@ -68,6 +68,14 @@ that app's installation AND to the workflow's repo lists. Mend's hosted Renovate
 never reliably ran on the private sites and must NOT have them in its repository access —
 two bots on one repo fight over the same `renovate/*` branch (aic's Hugo 0.165 bump
 stalled 8 days that way). Mend does run this repo itself (`renovate.json`, actions only).
+Mend's app is installed on "All repositories", so it auto-onboards every NEW repo (it
+opened foundedcolorado.org #1 the day after that repo was created) — turn it off per repo
+in the Mend portal (developer.mend.io → repo → Settings → Dependencies → Dependency Updates).
+
+**CVE coverage is a separate control.** The preset ignores every npm dep except
+hugo-extended, so runtime libs (zeroknowledge's `/api` ships `@noble/*`) are watched ONLY
+by GitHub Dependabot security alerts — which are off by default on a new repo. Each site
+must have them on: `gh api -i repos/bradfeld/<repo>/vulnerability-alerts` → 204 = on.
 
 **5. Smoke check** — each site's `.github/workflows/smoke.yml` calls the reusable
 workflow here:
@@ -119,7 +127,13 @@ critical elements, no Hugo errors) — catching the silent-render regression cla
 1. Start from `bradfeld/hugo-site-template` (it ships steps 1–5 above).
 2. `git submodule add https://github.com/bradfeld/hugo-common themes/hugo-common`
 3. `theme = ["hugo-common"]` (or `["YourTheme", "hugo-common"]`) in `hugo.toml`.
-4. Done — pinned, auto-updating, smoke-verified from day one.
+4. Wire it into the self-hosted runner: add the repo to the `feld-hugo-renovate` app's
+   installation FIRST, then to both repo lists in `.github/workflows/renovate.yml` — order
+   matters because the token is minted for the listed repos, so a repo the app can't see
+   risks failing the mint for every site (unobserved; don't find out the hard way).
+5. Turn Mend's Dependency Updates OFF for the repo in the Mend portal (it auto-onboards
+   new repos; see step 4 of the standard).
+6. Enable Dependabot security alerts: `gh api -X PUT repos/bradfeld/<repo>/vulnerability-alerts`.
 
 ## Partials provided
 
