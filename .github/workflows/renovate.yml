@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: Mint an installation token from the feld-hugo-renovate GitHub App
         id: app-token
-        uses: actions/create-github-app-token@v3.2.0
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           client-id: Iv23liJwt6rScSolHfTJ # app-id is deprecated in create-github-app-token
           private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}

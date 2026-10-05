@@ -1,0 +1,105 @@
+name: fleet-alerts
+# Daily watch on open Dependabot alerts across the Feld Hugo sites (PLA-3191).
+#
+# Why this exists: the shared Renovate preset (default.json) manages hugo-extended and the
+# hugo-common submodule ONLY, so a CVE in an npm transitive (adm-zip and tar under
+# hugo-extended's installer, 2026-10-02) is never patched automatically. Often it cannot
+# be: hugo-extended 0.166.0 declares `adm-zip ^0.5.17`, and the fix needed a `^0.6.1`
+# override, which no Renovate bump produces. Dependabot alerts are the only signal, and
+# nothing read them across the fleet. This run goes RED while any site has an open alert.
+# A failed scheduled run notifies the user who last edited this workflow's schedule, if
+# their GitHub Actions notification setting includes failed workflows — keep that on.
+#
+# PUBLIC REPO, PUBLIC LOGS: this file prints a fleet-wide pass/fail and nothing per site.
+# Which site has alerts, and what they are, is triaged on each site's private
+# Security → Dependabot page.
+#
+# Auth: the same feld-hugo-renovate GitHub App as renovate.yml, narrowed to read-only
+# Dependabot alerts (that app holds vulnerability_alerts:read, checked via
+# `gh api /apps/feld-hugo-renovate`). The site list must match renovate.yml; the upkeep
+# job fails when the two drift.
+
+on:
+  schedule:
+    - cron: "41 14 * * *" # daily; independent of renovate.yml's run
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  SITES: feld.com,foundry.vc,adventuresinclaude,zeroknowledge,foundedcolorado.org
+
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Mint a read-only alerts token from the feld-hugo-renovate GitHub App
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: Iv23liJwt6rScSolHfTJ
+          private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+          owner: bradfeld
+          repositories: ${{ env.SITES }}
+          permission-vulnerability-alerts: read
+
+      - name: Count open Dependabot alerts across the fleet
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -uo pipefail
+          total=0
+          unread=0
+          for repo in ${SITES//,/ }; do
+            # A failed read is never a zero: count it as unread, keep checking the other
+            # sites, and fail the run at the end. Per-site results stay out of the log.
+            if n=$(set -o pipefail; gh api --paginate "repos/bradfeld/$repo/dependabot/alerts?state=open&per_page=100" --jq '.[].number' | wc -l | tr -d ' '); then
+              total=$((total + n))
+            else
+              unread=$((unread + 1))
+            fi
+          done
+          if [ "$unread" -gt 0 ]; then
+            echo "::error::$unread site(s) could not be read — the watch is blind for them; check the app installation and that Dependabot alerts are enabled"
+          fi
+          if [ "$total" -gt 0 ]; then
+            echo "::error::$total open Dependabot alert(s) across the fleet — triage on each site's private Security tab"
+          fi
+          echo "fleet: $total open, $unread unread"
+          [ "$total" -eq 0 ] && [ "$unread" -eq 0 ]
+
+  upkeep:
+    # GitHub disables scheduled workflows in a public repo after 60 days without repository
+    # activity, and hugo-common changes rarely. A disabled watch sends nothing, which reads
+    # exactly like a clean fleet. This job re-enables both scheduled workflows on every run.
+    # [unverified] that an enable call resets the 60-day clock — the same mechanism the
+    # keepalive-workflow action (v2, API mode) relies on. Probe if the watch ever goes quiet:
+    # `gh api repos/bradfeld/hugo-common/actions/workflows --jq '.workflows[]|.path+" "+.state'`.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Keep the scheduled workflows enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for wf in fleet-alerts.yml renovate.yml; do
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$wf/enable"
+          done
+
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Site list matches renovate.yml
+        run: |
+          set -euo pipefail
+          theirs=$(sed -n 's/^ *repositories: *\([^ #]*\).*/\1/p' .github/workflows/renovate.yml)
+          if [ "$theirs" != "$SITES" ]; then
+            echo "::error::fleet-alerts.yml SITES ($SITES) does not match renovate.yml ($theirs) — a site is unwatched"
+            exit 1
+          fi
