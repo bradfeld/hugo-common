@@ -94,7 +94,10 @@ builds `bradfeld/hugo-site-template` with `themes/hugo-common` moved to the PR h
 through the PR's own (merge-ref) copy of `smoke.yml`. A hugo-common merge reaches every
 site's CI at once (they all call `smoke.yml@main`), so this is where a broken layout or
 `smoke.yml` change is caught before it ships. It does not exercise `default.json` or the
-other workflows here, and it is advisory until `main`'s branch protection requires it.
+other workflows here. `main`'s branch protection requires it, so a red or missing run
+blocks the merge. A PR that changes `default.json` or anything under `.github/workflows/`
+gets a human review before it merges, because this check cannot vouch for those files
+(a workflow PR is judged by its own copy of the check).
 It builds the template's `main`, so a red run on an unrelated PR may be the template's.
 
 ---
