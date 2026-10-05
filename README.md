@@ -99,6 +99,7 @@ blocks the merge. A PR that changes `default.json` or anything under `.github/wo
 gets a human review before it merges, because this check cannot vouch for those files
 (a workflow PR is judged by its own copy of the check).
 It builds the template's `main`, so a red run on an unrelated PR may be the template's.
+Merge with a plain `gh pr merge`: `--admin` bypasses the required check, and `--auto` lands it unattended.
 
 ---
 
