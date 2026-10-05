@@ -89,6 +89,14 @@ jobs:
 It builds with the pinned Hugo and asserts render invariants (pages built, no empty
 critical elements, no Hugo errors) — catching the silent-render regression class.
 
+**This repo's own PRs** get the same check before they merge: `consumer-build.yml`
+builds `bradfeld/hugo-site-template` with `themes/hugo-common` moved to the PR head,
+through the PR's own (merge-ref) copy of `smoke.yml`. A hugo-common merge reaches every
+site's CI at once (they all call `smoke.yml@main`), so this is where a broken layout or
+`smoke.yml` change is caught before it ships. It does not exercise `default.json` or the
+other workflows here, and it is advisory until `main`'s branch protection requires it.
+It builds the template's `main`, so a red run on an unrelated PR may be the template's.
+
 ---
 
 ## Gotchas (learned the hard way)

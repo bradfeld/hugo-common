@@ -1,0 +1,33 @@
+name: consumer-build
+# The PR check this repo never had. smoke.yml is workflow_call-only, so before this a
+# hugo-common change was first built by the SITES, after it had already merged to main:
+# every site calls smoke.yml@main and carries these layouts.
+#
+# This builds a real consumer against the PR before merge. The consumer is
+# bradfeld/hugo-site-template: public, so the job needs no secret, and its theme is
+# hugo-common alone, so the build exercises exactly the layouts a merge ships. The
+# layouts come from the PR head SHA. smoke.yml is called as ./.github/workflows/smoke.yml,
+# which GitHub resolves at the PR's merge ref, so a PR that changes smoke.yml is tested
+# by its own change (as merged with main), not by @main.
+#
+# What it does NOT cover: default.json (the Renovate preset the sites extend) and the
+# other workflows here (renovate.yml, fleet-alerts.yml). A change to those gets no
+# signal. It also depends on hugo-site-template's main building: a red run on an
+# unrelated PR should be checked against the template first.
+#
+# Unverified: a PR from a FORK. The head SHA then exists only through refs/pull/N/head,
+# and the submodule fetch by SHA has not been observed working for one.
+#
+# Advisory until main's branch protection lists it as a required check.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  consumer-build:
+    uses: ./.github/workflows/smoke.yml
+    with:
+      site-repository: bradfeld/hugo-site-template
+      hugo-common-ref: ${{ github.event.pull_request.head.sha }}

@@ -6,12 +6,12 @@
   "dependencyDashboard": false,
   "packageRules": [
     {
-      "description": "Minor/patch action bumps: automerge. No PR checks exist in this repo, so ignoreTests is required or Renovate waits forever. Majors stay as PRs for a human look.",
+      "description": "Minor/patch action bumps: automerge once the PR's consumer-build check passes. That check builds hugo-site-template against the PR, so it fully tests a smoke.yml action bump; for a bump to renovate.yml or fleet-alerts.yml it only proves the repo still builds a consumer. Before the check existed this rule needed ignoreTests: true or Renovate waited forever. Majors stay as PRs for a human look.",
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
       "groupName": "github-actions",
       "automerge": true,
-      "ignoreTests": true
+      "ignoreTests": false
     }
   ]
 }
