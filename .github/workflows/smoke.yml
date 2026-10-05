@@ -3,8 +3,21 @@ name: smoke
 #   jobs: { smoke: { uses: bradfeld/hugo-common/.github/workflows/smoke.yml@main } }
 # Renovate Hugo-bump PRs are automerge-gated on this passing, because a clean BUILD
 # is not enough — the byline bug built clean and only rendered wrong.
+#
+# Both inputs are optional and default to empty, which is exactly the behaviour every site
+# relies on: build the CALLING repo with its pinned submodules. consumer-build.yml in this
+# repo sets them to build a real consumer against a hugo-common PR head instead.
 on:
   workflow_call:
+    inputs:
+      site-repository:
+        description: "owner/repo of the site to build. Empty = the calling repo."
+        type: string
+        default: ""
+      hugo-common-ref:
+        description: "hugo-common commit to put in the site's themes/hugo-common. Empty = the site's pinned submodule."
+        type: string
+        default: ""
 
 jobs:
   smoke:
@@ -12,7 +25,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          repository: ${{ inputs.site-repository || github.repository }}
           submodules: recursive
+      - name: put the hugo-common under test in themes/hugo-common
+        if: inputs.hugo-common-ref != ''
+        env:
+          REF: ${{ inputs.hugo-common-ref }}
+        run: |
+          set -e
+          test -d themes/hugo-common || { echo "::error::site has no themes/hugo-common submodule to replace"; exit 1; }
+          git -C themes/hugo-common fetch --depth 1 origin "$REF"
+          git -C themes/hugo-common checkout --detach FETCH_HEAD
+          echo "themes/hugo-common is now $(git -C themes/hugo-common rev-parse HEAD)"
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
