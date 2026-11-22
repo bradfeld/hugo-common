@@ -23,12 +23,15 @@ wiring is the next rollout step — see status below.
 **1. Pin Hugo in-repo, not via Vercel env vars.** The version lives in `package.json`
 as `hugo-extended` — version-controlled, auditable in git, matching local dev, and
 **watchable by Renovate** (a bot can watch an npm dep; it can't watch a hidden Vercel
-env var). The standard version is **0.163.0**.
+env var). The standard version is **0.169.0**. The shared Renovate preset holds every
+site below **0.170.0**: from 0.170.0 Hugo ships no `hugo_extended_*_darwin-universal.pkg`, so
+the `hugo-extended` npm install fails on a Mac (Linux and Vercel are unaffected). Lift the
+`allowedVersions` rule in `default.json` once the newest `hugo-extended` installs on a Mac.
 
 ```jsonc
 // package.json
 {
-  "devDependencies": { "hugo-extended": "0.163.0" }
+  "devDependencies": { "hugo-extended": "0.169.0" }
   // Sites with serverless /api functions (e.g. zeroknowledge) ALSO need:
   // "pnpm": { "onlyBuiltDependencies": ["hugo-extended"] }
 }

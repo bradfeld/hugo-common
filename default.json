@@ -26,6 +26,12 @@
       "automerge": true
     },
     {
+      "description": "Hold hugo-extended below 0.170.0. From 0.170.0 Hugo publishes no hugo_extended_*_darwin-universal.pkg (only hugo_* and hugo_withdeploy_*), and the hugo-extended npm postinstall still downloads that name, so `npm install` fails on macOS (404) while the Linux-only smoke gate passes and would automerge the bump. Lift this rule once `npm install` of the newest hugo-extended succeeds on a Mac (check: `gh release view <tag> -R gohugoio/hugo --json assets` lists a darwin asset the npm installer requests). Seen 2026-11-22 on v0.170.0 and v0.170.1.",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["hugo-extended"],
+      "allowedVersions": "<0.170.0"
+    },
+    {
       "description": "Hugo major: open the PR only (human look — breaking-change risk)",
       "matchManagers": ["npm"],
       "matchPackageNames": ["hugo-extended"],
