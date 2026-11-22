@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>{{ .Title }}</title>
+  </head>
+  <body data-pagefind-ignore="all">
+    <!--
+      Pinned with an integrity hash: in GitHub mode this page holds a token that can
+      commit to main (which deploys the site), so it must never
+      run a script version nobody chose. To upgrade: change the version, then
+      curl -sL https://unpkg.com/@sveltia/cms@<version>/dist/sveltia-cms.js | openssl dgst -sha384 -binary | base64
+      and paste the result after "sha384-".
+    -->
+    <script
+      src="https://unpkg.com/@sveltia/cms@0.270.0/dist/sveltia-cms.js"
+      integrity="sha384-1PWMVQLxD8dGUGyxhuAzW9bW9EK+8qa/c6ntzhkqwb1x/1R58I64fX/zuQy+SgZF"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      // Sites write YouTube embeds as {{ "{{" }}< youtube VIDEO_ID >}} (positional).
+      // This component shows them as a video block in the rich text editor and
+      // writes the same positional form back, so existing posts round-trip unchanged.
+      // The shortcode opener, built here once so no template action sits inside a JS
+      // template literal (the layout is a Go template, so a literal opener must be escaped).
+      const shortcodeOpen = '{{ "{{" }}';
+      // Returns an 11-character video ID from a bare ID or a YouTube URL, or '' if
+      // the input is neither — so nothing unvalidated reaches the shortcode or the HTML.
+      const youtubeId = (value) => {
+        const text = String(value ?? '').trim();
+        if (/^[\w-]{11}$/.test(text)) return text;
+        const match = text.match(/(?:[?&]v=|youtu\.be\/|\/(?:embed|shorts|live)\/)([\w-]{11})(?![\w-])/);
+        return match ? match[1] : '';
+      };
+      CMS.registerEditorComponent({
+        id: 'youtube',
+        label: 'YouTube',
+        icon: 'youtube_activity',
+        fields: [{ name: 'id', label: 'Video ID or URL' }],
+        // The m flag makes this a block-level component (Sveltia docs, "YouTube Embed").
+        pattern: /{{ "{{" }}<\s*youtube\s+(?:id=")?(?<id>[\w-]+)"?\s*>}}/m,
+        fromBlock: ({ groups: { id } = {} }) => ({ id }),
+        toBlock: ({ id }) => {
+          const videoId = youtubeId(id);
+          return videoId ? `${shortcodeOpen}< youtube ${videoId} >}}` : '';
+        },
+        toPreview: ({ id }) => {
+          const videoId = youtubeId(id);
+          return videoId
+            ? `<iframe src="https://www.youtube-nocookie.com/embed/${videoId}" width="560" height="315" allowfullscreen></iframe>`
+            : '';
+        },
+      });
+    </script>
+  </body>
+</html>

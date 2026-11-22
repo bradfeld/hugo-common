@@ -53,6 +53,7 @@ jobs:
             npm install
           fi
       - name: build with the pinned Hugo
+        # The editor-page leak check below matches URLs on smoke.example, so keep this -b host in sync with it.
         run: node_modules/.bin/hugo --gc --minify -b "https://smoke.example/"
       - name: assert render invariants
         run: |
@@ -65,3 +66,33 @@ jobs:
             echo "::error::empty <a></a> with no text and no aria-label (broken-link / author-bug class)"; exit 1
           fi
           echo "smoke OK — built and rendered with the pinned Hugo"
+      - name: assert browser-editor pages are pinned and unlisted
+        run: |
+          # A page that loads sveltia-cms.js holds a GitHub token able to commit to the
+          # site, so it must load a pinned script (integrity hash), tell crawlers to stay
+          # out, and never appear in the sitemap or RSS feed. Sites without an editor
+          # page match nothing here and pass untouched. (data-pagefind-ignore is not
+          # checked: some sites still serve a hand-written static editor page without it.)
+          # The patterns allow unquoted attributes because --minify strips the quotes.
+          set -e
+          count=0
+          while IFS= read -r -d '' page; do
+            grep -q 'sveltia-cms\.js' "$page" || continue
+            count=$((count + 1))
+            dir="${page#public/}"
+            dir="${dir%index.html}"
+            path="/${dir}"
+            if ! grep -qE 'integrity="?sha384-' "$page"; then
+              echo "::error::editor page leak: $path has no integrity hash on the sveltia-cms script"; exit 1
+            fi
+            if ! grep -qE 'name="?robots"? content="?noindex' "$page"; then
+              echo "::error::editor page leak: $path is missing the robots noindex tag"; exit 1
+            fi
+            if [ -f public/sitemap.xml ] && grep -qF "<loc>https://smoke.example${path}</loc>" public/sitemap.xml; then
+              echo "::error::editor page leak: $path is listed in public/sitemap.xml"; exit 1
+            fi
+            if [ -f public/index.xml ] && grep -qF "<link>https://smoke.example${path}</link>" public/index.xml; then
+              echo "::error::editor page leak: $path is listed in public/index.xml"; exit 1
+            fi
+          done < <(find public -name index.html -print0)
+          echo "editor pages checked: $count"
