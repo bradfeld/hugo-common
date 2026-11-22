@@ -27,7 +27,7 @@ on:
 permissions: {}
 
 env:
-  SITES: feld.com,foundry.vc,adventuresinclaude,zeroknowledge,foundedcolorado.org
+  SITES: feld.com,foundry.vc,adventuresinclaude,zeroknowledge,foundedcolorado.org,anchorpointfoundation.org
 
 jobs:
   count:

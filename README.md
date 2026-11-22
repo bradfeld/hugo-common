@@ -160,17 +160,19 @@ _(More infra partials — analytics, shared OG/meta — land here as they're fac
 
 ---
 
-## Rollout status (updated 2026-06-14)
+## Rollout status (fleet table updated 2026-11-22; notes below are as of 2026-06-14)
 
-All four sites migrated to the in-repo Hugo pin (`0.163.0`), the shared Renovate preset,
-and the reusable smoke gate — each deployed and verified live.
+All six sites pin Hugo in-repo in `package.json`, extend the shared Renovate preset, and
+call the reusable smoke gate. Only the two newest carry the `hugo-common` submodule so far.
 
-| site | pin | pkg mgr | renovate + smoke | live |
-|---|---|---|---|---|
-| zeroknowledge.ink | 0.163.0 | pnpm (has `/api`) | ✓ | ✓ |
-| foundry.vc | 0.163.0 | npm | ✓ | ✓ |
-| adventuresinclaude.ai | 0.163.0 | npm | ✓ | ✓ |
-| feld.com | 0.163.0 | npm | ✓ | ✓ |
+| site | pin + preset + smoke | `hugo-common` submodule |
+|---|---|---|
+| zeroknowledge.ink (pnpm, has `/api`) | ✓ | not yet |
+| foundry.vc | ✓ | not yet |
+| adventuresinclaude.ai | ✓ | not yet |
+| feld.com | ✓ | not yet |
+| foundedcolorado.org | ✓ | ✓ |
+| anchorpointfoundation.org | ✓ | ✓ |
 
 **Done 2026-06-14:**
 
