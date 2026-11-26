@@ -53,5 +53,12 @@
         },
       });
     </script>
+    {{- /* Per-site editor additions (a custom page, a field type): a site that has
+      layouts/_partials/sveltia-cms-extra.html gets it here, after the CMS script, so
+      it can call CMS.registerCustomPage() and friends. A site without one gets nothing.
+      Keep site-specific code (and the editor path) in the site's repo, never here. */}}
+    {{- if templates.Exists "_partials/sveltia-cms-extra.html" }}
+    {{ partial "sveltia-cms-extra.html" . }}
+    {{- end }}
   </body>
 </html>
